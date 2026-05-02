@@ -25,6 +25,11 @@ interface LogResponse {
   message: string;
 }
 
+/** Truncate message to 48 characters max as required by the API */
+function truncate(msg: string): string {
+  return msg.length > 48 ? msg.substring(0, 48) : msg;
+}
+
 /**
  * Log - Reusable logging function that sends structured log entries
  * to the Affordmed evaluation service.
@@ -32,7 +37,7 @@ interface LogResponse {
  * @param stack   - Application layer: "backend" | "frontend"
  * @param level   - Severity level: "debug" | "info" | "warn" | "error" | "fatal"
  * @param pkg     - Package/module originating the log
- * @param message - Descriptive log message
+ * @param message - Descriptive log message (truncated to 48 chars)
  */
 export async function Log(
   stack: Stack,
@@ -45,7 +50,7 @@ export async function Log(
 
     const response = await axios.post<LogResponse>(
       LOG_URL,
-      { stack, level, package: pkg, message },
+      { stack, level, package: pkg, message: truncate(message) },
       {
         headers: {
           "Content-Type": "application/json",
