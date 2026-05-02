@@ -24,11 +24,12 @@ export async function Log(
   pkg: FrontendPackage,
   message: string
 ): Promise<void> {
+  const truncated = message.length > 48 ? message.substring(0, 48) : message;
   try {
     await fetch("/api/log", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stack, level, package: pkg, message }),
+      body: JSON.stringify({ stack, level, package: pkg, message: truncated }),
     });
   } catch {
     // Silent fail — never let logging break the UI
