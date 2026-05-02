@@ -14,6 +14,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 import axios from "axios";
 import { Log } from "./src/utils/logger";
+import { getAuthToken } from "../logging_middleware/src/auth";
 import { getTopNNotifications } from "./src/service/priorityService";
 import { Notification } from "./src/domain/notification";
 
@@ -26,14 +27,12 @@ const TYPE_WEIGHT: Record<string, number> = { Placement: 3, Result: 2, Event: 1 
 async function main(): Promise<void> {
   await Log("backend", "info", "service", "Stage 1: Priority Inbox script started");
 
-  const token = process.env.ACCESS_TOKEN;
-  if (!token) {
-    await Log(
-      "backend",
-      "fatal",
-      "config",
-      "ACCESS_TOKEN is not set in .env. Cannot proceed with fetching notifications."
-    );
+  let token: string;
+  try {
+    token = await getAuthToken();
+    await Log("backend", "info", "auth", "Successfully obtained auth token");
+  } catch (err: unknown) {
+    await Log("backend", "fatal", "auth", `Failed to obtain auth token: ${String(err)}`);
     process.exit(1);
   }
 

@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import * as path from "path";
 import { Notification } from "../domain/notification";
 import { Log } from "../utils/logger";
+import { getAuthToken } from "../../../logging_middleware/src/auth";
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
@@ -28,16 +29,27 @@ export async function fetchNotifications(params?: {
     `Fetching notifications from evaluation service with params: ${JSON.stringify(params ?? {})}`
   );
 
-  const token = process.env.ACCESS_TOKEN;
+  let token: string;
+  try {
+    token = await getAuthToken();
+  } catch (err: unknown) {
+    await Log(
+      "backend",
+      "fatal",
+      "repository",
+      `Failed to obtain auth token for notifications API: ${String(err)}`
+    );
+    throw new Error("Failed to obtain auth token");
+  }
 
   if (!token) {
     await Log(
       "backend",
       "error",
       "repository",
-      "ACCESS_TOKEN missing from environment variables; cannot fetch notifications"
+      "Auth token is empty; cannot fetch notifications"
     );
-    throw new Error("ACCESS_TOKEN not configured");
+    throw new Error("Empty auth token");
   }
 
   try {
